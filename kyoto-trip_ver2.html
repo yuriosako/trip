@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>京都紅葉めぐり 1泊2日の旅プラン Ver. 8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" xintegrity="sha512-Fo3rlroMTOp9F/2qB2d1Wd7t7K8S3E5hR/4/lWf40f2f/8e2+J3aC6M4n5U5A9f5t7I5g5H5J5+X6v6L6+X6w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Chosen Palette: Deep Autumn Reds -->
+    <!-- Application Structure Plan: The application maintains a single-page, scrollable itinerary. The information hierarchy flows from a general overview (概要) to a detailed section on meeting and access logistics (集合・アクセスガイド), then to a detailed daily schedule (スケジュール), followed by specific recommendations for dining and activities (グルメ & 体験スポット), accommodation options (おすすめのホテル), a budget analysis (予算シミュレーション), and finally provides crucial pre-trip advice (旅のヒント) including seasonal considerations, booking tips, and a packing list. This sequential flow is intuitive for planning and on-trip reference, moving from high-level to detailed information, then to practical advice. A sticky navigation bar with smooth-scrolling anchor links provides consistent, easy access to all sections, enhancing user experience on various devices. -->
+    <!-- Visualization & Content Choices: Report Info: Budget Breakdown -> Goal: Inform/Compare -> Viz/Method: Doughnut Chart (Chart.js) -> Interaction: Hover for details -> Justification: A doughnut chart effectively illustrates the proportional allocation of the budget, making complex financial information immediately understandable. It engages the user more than a simple list and clearly shows where the money is expected to be spent within the 40,000 JPY budget per person. Report Info: Schedule -> Goal: Organize/Change -> Viz/Method: Tabbed Timeline (HTML/Tailwind/JS) -> Interaction: Click tabs for Day 1/Day 2 -> Justification: The tabbed interface for the daily schedule enhances clarity by segmenting information into digestible chunks (per day). This prevents information overload and allows users to easily navigate between days without excessive scrolling, which is beneficial for reviewing detailed itineraries. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #FEFBF6;
+            color: #3C2A21;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Kiwi Maru', serif;
+        }
+        .bg-primary { background-color: #FEFBF6; }
+        .bg-secondary { background-color: #FFFDF9; }
+        .bg-accent { background-color: #A94438; }
+        .text-accent { color: #A94438; }
+        .border-accent { border-color: #A94438; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 1.75rem;
+            bottom: -1.75rem;
+            width: 2px;
+            background-color: #D3756B;
+            transform: translateX(-50%);
+        }
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: 1.25rem;
+            top: 1.75rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: #A94438;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 4px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #A94438;
+            border-bottom-color: #A94438;
+        }
+        .tab-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button.active {
+            background-color: #A94438;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Limits chart width on larger screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height for chart container */
+            max-height: 400px; /* Max height to prevent excessive vertical space */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-primary">
+
+    <header id="header" class="bg-secondary/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-accent">秋色に染まる京都旅</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-6">
+                        <a href="#overview" class="nav-link px-2 text-sm font-medium">旅の概要</a>
+                        <a href="#meeting-access" class="nav-link px-2 text-sm font-medium">集合・アクセス</a>
+                        <a href="#schedule" class="nav-link px-2 text-sm font-medium">スケジュール</a>
+                        <a href="#spots" class="nav-link px-2 text-sm font-medium">グルメ & 体験</a>
+                        <a href="#accommodation" class="nav-link px-2 text-sm font-medium">宿泊</a>
+                        <a href="#budget" class="nav-link px-2 text-sm font-medium">予算</a>
+                        <a href="#notes" class="nav-link px-2 text-sm font-medium">旅のヒント</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-white border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent">
+                        <option value="#overview">概要</option>
+                        <option value="#meeting-access">集合・アクセス</option>
+                        <option value="#schedule">日程</option>
+                        <option value="#spots">お店</option>
+                        <option value="#accommodation">宿泊</option>
+                        <option value="#budget">予算</option>
+                        <option value="#notes">旅のヒント</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <section id="overview" class="mb-16 scroll-mt-20">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-gray-800 mb-3">忘れられない、秋の京都へ</h2>
+                <p class="text-lg text-gray-600">女性3人旅のための1泊2日・紅葉満喫プラン</p>
+            </div>
+            <div class="bg-secondary p-8 rounded-xl shadow-lg">
+                <p class="text-gray-700 leading-relaxed mb-6">
+                    このプランは、11月の紅葉が最も美しい時期に、京都の魅力を凝縮した特別な旅をご提案するものです。広島・岡山から集まる3人が、必須スポットの「清水寺」と「瑠璃光院」を効率よく巡り、さらに着物での古都散策も楽しめます。今回は、夜のライトアップされた清水寺を着物姿で訪れ、その日のうちに返却する、より思い出深い体験を組み込みました。京都ならではの食文化に触れるお食事処やカフェ、快適な宿泊施設まで、すべてを予算内で楽しめるよう緻密に計画しています。忘れられない思い出作りのための、最高のガイドです。
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-6">
+                    <div class="bg-primary p-4 rounded-lg border border-gray-200">
+                        <p class="font-bold text-accent text-lg">日程</p>
+                        <p class="text-gray-700 font-medium">11月22日(金)〜23日(土)</p>
+                    </div>
+                    <div class="bg-primary p-4 rounded-lg border border-gray-200">
+                        <p class="font-bold text-accent text-lg">概算予算</p>
+                        <p class="text-gray-700 font-medium">¥40,000 / 人</p>
+                    </div>
+                    <div class="bg-primary p-4 rounded-lg border border-gray-200">
+                        <p class="font-bold text-accent text-lg">ハイライト</p>
+                        <p class="text-gray-700 font-medium">清水寺夜間拝観・瑠璃光院・着物体験</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="meeting-access" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">集合・アクセスガイド</h2>
+            <div class="text-center mb-8 max-w-2xl mx-auto">
+                <p class="text-gray-600">京都駅でのスムーズな合流と、各出発地からのアクセスに関する情報です。</p>
+            </div>
+            <div class="bg-secondary p-6 sm:p-8 rounded-xl shadow-lg space-y-6">
+                <div>
+                    <h3 class="font-bold text-2xl mb-3 text-accent"><i class="fas fa-calendar-check mr-2"></i>目標集合時間</h3>
+                    <p class="text-gray-700">1日目 <span class="font-extrabold">10:00</span> 京都駅中央口</p>
+                    <p class="text-sm text-gray-500 mt-1">新幹線や在来線の到着時間に合わせて、遅延なども考慮し余裕を持った時間設定です。</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-2xl mb-3 text-accent"><i class="fas fa-train mr-2"></i>京都までのアクセス例 (新幹線)</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><span class="font-extrabold">広島県尾道市・福山市</span>から：
+                            <ul class="list-circle pl-5 space-y-1">
+                                <li>新尾道駅 または 福山駅から山陽新幹線「のぞみ」で京都駅へ。</li>
+                                <li>所要時間目安：約1時間半〜2時間</li>
+                                <li>運賃目安：片道 約9,000円〜10,000円</li>
+                            </ul>
+                        </li>
+                        <li><span class="font-extrabold">岡山県笠岡市</span>から：
+                            <ul class="list-circle pl-5 space-y-1">
+                                <li>新倉敷駅 または 岡山駅から山陽新幹線「のぞみ」で京都駅へ。</li>
+                                <li>所要時間目安：約1時間半〜1時間45分</li>
+                                <li>運賃目安：片道 約7,500円〜9,000円</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p class="text-sm text-gray-500 mt-2">※上記運賃は目安であり、時期や予約方法（早割など）により変動します。往復割引なども検討し、交通費予算（1人あたり13,000円）に合わせて調整しましょう。</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-2xl mb-3 text-accent"><i class="fas fa-suitcase mr-2"></i>手荷物について</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><span class="font-extrabold">京都駅到着後、まずは駅構内のコインロッカー</span>に大きな荷物を預けることを強くおすすめします。</li>
+                        <li>観光中は身軽に動けるよう、必要最低限の貴重品や小物を入れる<span class="font-extrabold">コンパクトなショルダーバッグ</span>などを用意しましょう。</li>
+                        <li>着物レンタル時には、着替えや貴重品以外の荷物は預けられることが多いですが、事前に確認しておくと安心です。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="schedule" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">旅のタイムライン</h2>
+            <div class="text-center mb-8 max-w-2xl mx-auto">
+                <p class="text-gray-600">ここでは旅の具体的な流れを時間軸で確認できます。下のボタンで1日目と2日目を切り替え、計画的に行動しましょう。移動や滞在時間の目安も記載しています。</p>
+            </div>
+            <div class="flex justify-center mb-8">
+                <button id="day1-btn" class="tab-button active px-8 py-3 font-semibold rounded-l-full">1日目</button>
+                <button id="day2-btn" class="tab-button px-8 py-3 font-semibold rounded-r-full">2日目</button>
+            </div>
+
+            <div id="day1-content" class="bg-secondary p-6 sm:p-8 rounded-xl shadow-lg">
+                <h3 class="font-bold text-2xl mb-6 text-accent">Day 1：着物で巡る夜の清水寺</h3>
+                <div class="relative">
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">10:00 京都駅に集合</p>
+                        <p class="text-sm text-gray-500">移動: 市バスで約20-30分</p>
+                        <p class="text-gray-700 mt-2">全員が京都駅に到着したら、まずは中央口で合流。駅のコインロッカーに荷物を預け、身軽になって市バスで高台寺方面へ。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">10:45 夢京都 高台寺店 着物レンタル・着付け</p>
+                        <p class="text-sm text-gray-500">滞在: 約90分</p>
+                        <p class="text-gray-700 mt-2">当日返却プランで、お気に入りの着物を選んで着付けてもらいます。手荷物は預けて身軽に観光へ。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">12:15 京町家でランチ</p>
+                        <p class="text-sm text-gray-500">滞在: 約75分 | 移動: 徒歩すぐ</p>
+                        <p class="text-gray-700 mt-2">着物姿が映える京町家を改装したレストランで、美しい京料理を堪能します。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">13:30 祇園・高台寺周辺散策</p>
+                        <p class="text-sm text-gray-500">滞在: 約180分</p>
+                        <p class="text-gray-700 mt-2">花見小路や八坂庚申堂など、風情ある祇園エリアを散策。カフェで休憩も。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">16:45 清水寺へ移動</p>
+                        <p class="text-sm text-gray-500">移動: 徒歩約15分</p>
+                        <p class="text-gray-700 mt-2">ライトアップが始まる時間に合わせて清水寺へ。昼間とは違う幻想的な姿を楽しみましょう。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">17:00 清水寺 夜間特別拝観</p>
+                        <p class="text-sm text-gray-500">滞在: 約120分</p>
+                        <p class="text-gray-700 mt-2">ライトアップされた清水の舞台は圧巻。紅葉と夜景のコラボレーションを満喫します。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">19:00 夢京都 高台寺店 着物返却</p>
+                        <p class="text-sm text-gray-500">滞在: 約30分 | 移動: 清水寺から徒歩約15分</p>
+                        <p class="text-gray-700 mt-2">営業時間内に着物を返却。着替えて身軽になります。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">19:45 夕食 (先斗町・木屋町エリア)</p>
+                        <p class="text-sm text-gray-500">滞在: 約120分 | 移動: 返却店からバス＋徒歩約20-30分</p>
+                        <p class="text-gray-700 mt-2">着物から着替えた後、趣ある先斗町や木屋町で京料理や創作和食のディナーを。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">22:00 ホテルへチェックイン</p>
+                        <p class="text-sm text-gray-500">移動: 徒歩約10-15分</p>
+                        <p class="text-gray-700 mt-2">清水五条エリアのホテルへ。一日の疲れを癒しましょう。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="day2-content" class="hidden bg-secondary p-6 sm:p-8 rounded-xl shadow-lg">
+                <h3 class="font-bold text-2xl mb-6 text-accent">Day 2：瑠璃光院と嵐山の絶景</h3>
+                <div class="relative">
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">9:00 ホテル出発</p>
+                        <p class="text-sm text-gray-500">移動: 清水五条駅から京都駅まで電車で約10分</p>
+                        <p class="text-gray-700 mt-2">ホテルをチェックアウトし、荷物を持って京都駅へ移動。駅のロッカーに預け直します。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">9:45 瑠璃光院へ移動</p>
+                        <p class="text-sm text-gray-500">移動: 叡山電鉄で約40分</p>
+                        <p class="text-gray-700 mt-2">京都駅から電車を乗り継ぎ、神秘的な瑠璃光院がある八瀬比叡山口駅へ向かいます。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">10:30 瑠璃光院 拝観</p>
+                        <p class="text-sm text-gray-500">滞在: 約90分</p>
+                        <p class="text-gray-700 mt-2">磨き上げられた床に紅葉が映り込む「床もみじ」は、写真映えも抜群。心ゆくまで鑑賞しましょう。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">12:00 嵐山へ移動・昼食</p>
+                        <p class="text-sm text-gray-500">滞在: 約60分 | 移動: 電車で約60分</p>
+                        <p class="text-gray-700 mt-2">嵐山方面へ移動し、渡月橋周辺で京都らしい湯豆腐やにしんそばのランチ。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">13:30 嵐山散策</p>
+                        <p class="text-sm text-gray-500">滞在: 約150分</p>
+                        <p class="text-gray-700 mt-2">竹林の小径の神秘的な雰囲気や、渡月橋からの雄大な景色を楽しみ、お土産探しや食べ歩きも満喫。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">16:00 京都駅へ移動</p>
+                        <p class="text-sm text-gray-500">移動: JR嵯峨野線で約17分</p>
+                        <p class="text-700 mt-2">ロッカーの荷物を受け取り、お土産の最終チェックをしながら帰りの準備。</p>
+                    </div>
+                    <div class="timeline-item relative pl-10 pb-8">
+                        <div class="timeline-marker"></div>
+                        <p class="font-bold text-lg">17:00頃 京都駅を出発</p>
+                        <p class="text-gray-700 mt-2">たくさんの思い出と共に、それぞれの帰路へ。お疲れ様でした！</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="spots" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">グルメ & 体験スポット</h2>
+            <div class="text-center mb-8 max-w-2xl mx-auto">
+                <p class="text-gray-600">旅のスケジュールに合わせて立ち寄れる、おすすめのお店を厳選しました。着物レンタルからランチ、カフェ、ディナーまで、思い出に残る体験を。</p>
+            </div>
+            <div class="space-y-10">
+                <div>
+                    <h3 class="font-bold text-2xl mb-4 text-accent border-b-2 border-accent pb-2">東山・清水寺・河原町エリア</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
+                            <h4 class="font-bold text-lg">夢京都 高台寺店</h4>
+                            <p class="text-sm text-gray-500 mb-2">着物レンタル</p>
+                            <p class="text-sm mb-3 flex-grow">清水寺や高台寺に近く、アクセス便利。夜間拝観に合わせた当日最終返却が可能です。</p>
+                            <a href="https://maps.app.goo.gl/m6Nn32Xg8H9f7tY19" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                        </div>
+                        <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
+                            <h4 class="font-bold text-lg">AWOMB 祇園八坂</h4>
+                            <p class="text-sm text-gray-500 mb-2">手織り寿し</p>
+                            <p class="text-sm mb-3 flex-grow">見た目も美しい「手織り寿し」は、まるで宝石箱のよう。着物姿でのランチにぴったりです。</p>
+                            <a href="https://maps.app.goo.gl/9uE84hG8sBw889eT8" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                        </div>
+                        <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
+                            <h4 class="font-bold text-lg">茶寮都路里 祇園本店</h4>
+                            <p class="text-sm text-gray-500 mb-2">和カフェ</p>
+                            <p class="text-sm mb-3 flex-grow">京都を代表する抹茶パフェの名店。散策の途中で甘いもので一息つきましょう。</p>
+                            <a href="https://maps.app.goo.gl/4Q3X5F3K3J4E8tY19" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                        </div>
+                        <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
+                            <h4 class="font-bold text-lg">豆水楼 木屋町本店</h4>
+                            <p class="text-sm text-gray-500 mb-2">豆腐料理</p>
+                            <p class="text-sm mb-3 flex-grow">鴨川沿いの情緒あるお店で、湯葉や豆腐を使った京料理を。着物でのディナーにも最適です。</p>
+                            <a href="https://maps.app.goo.gl/V8Q1zRz8p6E2" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-2xl mb-4 text-accent border-b-2 border-accent pb-2">瑠璃光院・嵐山エリア</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
+                            <h4 class="font-bold text-lg">釜めし 志津香</h4>
+                            <p class="text-sm text-gray-500 mb-2">釜飯</p>
+                            <p class="text-sm mb-3 flex-grow">瑠璃光院近くの趣あるお店。注文を受けてから丁寧に炊き上げる釜飯は格別の味です。</p>
+                            <a href="https://maps.app.goo.gl/444L61o38G74E2m46" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                        </div>
+                        <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
+                            <h4 class="font-bold text-lg">嵐山よしむら</h4>
+                            <p class="text-sm text-gray-500 mb-2">手打ち蕎麦</p>
+                            <p class="text-sm mb-3 flex-grow">渡月橋を一望できる絶景ロケーションで、本格的な手打ち蕎麦が楽しめる人気店。</p>
+                            <a href="https://maps.app.goo.gl/8vUuK5QvHqgCqf746" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="accommodation" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">おすすめの宿泊施設</h2>
+            <div class="text-center mb-8 max-w-2xl mx-auto">
+                <p class="text-gray-600">清水寺や祇園エリアへのアクセスが良く、3名様での宿泊も快適な施設を選定しました。予算と旅のスタイルに合わせてお選びください。</p>
+            </div>
+            <div class="space-y-8">
+                <div class="bg-secondary rounded-xl shadow-lg overflow-hidden md:flex">
+                    <div class="md:w-1/3">
+                        <img src="https://placehold.co/600x400/A94438/FFFFFF?text=Guest+House" alt="ゲストハウス菜の花のイメージ" class="object-cover h-56 w-full md:h-full">
+                    </div>
+                    <div class="p-8 md:w-2/3 flex flex-col">
+                        <h3 class="font-bold text-2xl text-accent mb-3">ゲストハウス菜の花 (Guest House Nanohana)</h3>
+                        <p class="text-gray-700 mb-6 flex-grow">
+                            清水五条駅から徒歩圏内、清水寺へも歩いて行ける便利な立地。趣のある京町家を改装したアットホームな雰囲気で、女性グループにも人気です。比較的リーズナブルな価格で、和の情緒を感じながら宿泊したい方におすすめです。共同スペースもあり、他の宿泊者との交流も楽しめるかもしれません。
+                        </p>
+                        <a href="https://maps.app.goo.gl/P3wNn9XbB4Z5Y2Z9A" target="_blank" class="inline-block bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition self-start">
+                            マップで見る
+                        </a>
+                    </div>
+                </div>
+                <div class="bg-secondary rounded-xl shadow-lg overflow-hidden md:flex">
+                    <div class="md:w-1/3">
+                        <img src="https://placehold.co/600x400/D3756B/FFFFFF?text=Hotel" alt="清水五条呉竹壮のイメージ" class="object-cover h-56 w-full md:h-full">
+                    </div>
+                    <div class="p-8 md:w-2/3 flex flex-col">
+                        <h3 class="font-bold text-2xl text-accent mb-3">清水五条呉竹壮 (Kuretake-sou Kiyomizu-Gojo)</h3>
+                        <p class="text-gray-700 mb-6 flex-grow">
+                            清水五条駅からすぐ、観光の拠点に最適なホテル。清水寺へも徒歩圏内で、夜間拝観後の移動も楽々です。清潔感のある機能的な客室で、3名様でも快適に過ごせる広めの部屋タイプがあることも魅力。安心して宿泊したい方にぴったりの選択肢です。
+                        </p>
+                        <a href="https://maps.app.goo.gl/V8qG8B2B7m2V5S4wQ56" target="_blank" class="inline-block bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition self-start">
+                            マップで見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="budget" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">予算シミュレーション (1人あたり)</h2>
+            <div class="text-center mb-8 max-w-2xl mx-auto">
+                <p class="text-gray-600">この旅行の概算費用（<span class="font-extrabold">合計40,000円</span>）の内訳をグラフで示します。どこにどれくらいかかるのかを把握し、賢く旅を楽しみましょう。グラフの各項目にマウスを合わせると、金額が表示されます。</p>
+                <p class="text-sm text-gray-500 mt-2">※交通費は新幹線代を含んだ概算です。実際の料金は時期や割引により変動する場合があります。</p>
+            </div>
+            <div class="bg-secondary p-6 sm:p-8 rounded-xl shadow-lg">
+                <div class="chart-container">
+                    <canvas id="budgetChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="notes" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">旅のヒント：季節的な注意点と予約のコツ</h2>
+            <div class="text-center mb-8 max-w-2xl mx-auto">
+                <p class="text-gray-600">11月の京都旅行を最大限に楽しむための重要なポイントと、スムーズな旅のための準備と予約のアドバイスです。</p>
+            </div>
+            <div class="bg-secondary p-6 sm:p-8 rounded-xl shadow-lg">
+                <div class="mb-8">
+                    <h3 class="font-bold text-2xl mb-4 text-accent border-b-2 border-accent pb-2"><i class="fas fa-umbrella-beach mr-3"></i>季節的な注意点 (11月下旬)</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><span class="font-extrabold">気候と服装:</span> 11月下旬の京都は、日中でも肌寒く感じることが増え、朝晩は特に冷え込みます。<span class="font-extrabold">厚手のコートやダウンジャケット、マフラー、手袋</span>など、しっかりとした防寒対策が必須です。カイロなども準備しておくと良いでしょう。</li>
+                        <li><span class="font-extrabold">混雑状況:</span> 紅葉シーズンは京都が年間で最も混雑する時期です。特に週末は、<span class="font-extrabold">人気観光スポット、寺社仏閣、公共交通機関（バス・電車）</span>は非常に混み合います。時間には十分な余裕を持ち、効率的に移動できるよう計画しましょう。</li>
+                        <li><span class="font-extrabold">夜間特別拝観:</span> 清水寺の夜間ライトアップは非常に人気があり、入場までに時間がかかることがあります。<span class="font-extrabold">事前にオンラインでチケットを購入</span>したり、少し早めに到着したりするなど、混雑を避ける工夫をするとスムーズです。</li>
+                        <li><span class="font-extrabold">歩きやすい靴:</span> 石畳や坂道が多い京都では、<span class="font-extrabold">歩きやすい靴</span>が何よりも重要です。着物着用時も、足元が安定する草履を選ぶか、慣れない場合は替えの靴を持参することをおすすめします。</li>
+                    </ul>
+                </div>
+                <div class="mb-8">
+                    <h3 class="font-bold text-2xl mb-4 text-accent border-b-2 border-accent pb-2"><i class="fas fa-ticket-alt mr-3"></i>予約を強く推奨するお店・体験</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><span class="font-extrabold">AWOMB 祇園八坂 (手織り寿し):</span> 京都でも有数の人気店で、特に紅葉シーズンは<span class="font-extrabold">数ヶ月前からの予約</span>が必須です。オンライン予約サイトなどを活用して、早めに確保しましょう。</li>
+                        <li><span class="font-extrabold">茶寮都路里 祇園本店 (和カフェ):</span> 予約はできませんが、常に長蛇の列ができます。<span class="font-extrabold">開店直後を狙うか、食事の時間をずらす</span>など、ピークタイムを避けるのが賢明です。</li>
+                        <li><span class="font-extrabold">豆水楼 木屋町本店 (豆腐料理):</span> ディナーは大変人気があるため、<span class="font-extrabold">事前予約</span>を強くおすすめします。特に週末や祝日は混み合いますので、早めの予約が良いでしょう。</li>
+                        <li><span class="font-extrabold">着物レンタル店:</span> 紅葉シーズンの着物レンタルは予約が集中します。希望の柄や時間帯がある場合は、<span class="font-extrabold">早めのオンライン予約</span>が安心です。</li>
+                        <li><span class="font-extrabold">瑠璃光院:</span> 秋の特別拝観は大変人気で、<span class="font-extrabold">入場には拝観料が必要</span>です。チケット購入方法は瑠璃光院の公式サイトで最新情報を確認し、必要に応じて事前に準備しましょう。</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-2xl mb-4 text-accent border-b-2 border-accent pb-2"><i class="fas fa-suitcase-rolling mr-3"></i>持っていくべきものリスト</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><span class="font-extrabold">防寒着:</span> 厚手のコート、マフラー、手袋、ヒートテックなどのインナー。</li>
+                        <li><span class="font-extrabold">歩きやすい靴:</span> スニーカーやウォーキングシューズなど、長時間歩いても疲れにくいもの。</li>
+                        <li><span class="font-extrabold">雨具:</span> 折りたたみ傘やレインコート。</li>
+                        <li><span class="font-extrabold">モバイルバッテリー:</span> スマートフォンでの地図検索や写真撮影で電池消費が早いため必須。</li>
+                        <li><span class="font-extrabold">カメラ:</span> 紅葉の美しい景色を収めるために。</li>
+                        <li><span class="font-extrabold">常備薬・救急用品:</span> 胃薬、頭痛薬、絆創膏など。</li>
+                        <li><span class="font-extrabold">現金:</span> 小さな個人商店やバスの支払いなどで現金が必要な場合があるため。</li>
+                        <li><span class="font-extrabold">エコバッグ:</span> お土産が増えたときに便利。</li>
+                        <li><span class="font-extrabold">化粧品・スキンケア用品:</span> 旅行用のミニサイズがあると便利です。</li>
+                        <li><span class="font-extrabold">マスク・手指消毒剤:</span> 衛生対策のために。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-secondary mt-16 py-8 border-t border-gray-200">
+        <div class="container mx-auto text-center text-gray-500 text-sm">
+            <p>京都紅葉めぐり 1泊2日の旅プラン Ver. 8</p>
+            <p class="mt-1">最高の思い出作りをサポートします。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const day1Btn = document.getElementById('day1-btn');
+            const day2Btn = document.getElementById('day2-btn');
+            const day1Content = document.getElementById('day1-content');
+            const day2Content = document.getElementById('day2-content');
+
+            day1Btn.addEventListener('click', () => {
+                day1Content.classList.remove('hidden');
+                day2Content.classList.add('hidden');
+                day1Btn.classList.add('active');
+                day2Btn.classList.remove('active');
+            });
+
+            day2Btn.addEventListener('click', () => {
+                day2Content.classList.remove('hidden');
+                day1Content.classList.add('hidden');
+                day2Btn.classList.add('active');
+                day1Btn.classList.remove('active');
+            });
+
+            const budgetData = {
+                labels: ['宿泊費', '交通費(往復+市内)', '食費', '着物レンタル代', '観光・その他体験費', 'その他・お土産'],
+                datasets: [{
+                    label: '予算内訳',
+                    data: [8500, 13000, 11500, 5000, 2000, 3000], /* Total ¥40,000 */
+                    backgroundColor: [
+                        '#D3756B',
+                        '#F4A9A8',
+                        '#E6B39A',
+                        '#A94438',
+                        '#C2847A',
+                        '#EAE0D5'
+                    ],
+                    borderColor: '#FEFBF6',
+                    hoverOffset: 8,
+                    hoverBorderColor: '#3C2A21'
+                }]
+            };
+
+            const budgetConfig = {
+                type: 'doughnut',
+                data: budgetData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    family: "'Noto Sans JP', sans-serif",
+                                    size: 12
+                                },
+                                color: '#3C2A21'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#3C2A21',
+                            titleFont: { size: 14, family: "'Kiwi Maru', serif" },
+                            bodyFont: { size: 12, family: "'Noto Sans JP', sans-serif" },
+                            padding: 10,
+                            cornerRadius: 5,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                },
+            };
+
+            const budgetChart = new Chart(
+                document.getElementById('budgetChart'),
+                budgetConfig
+            );
+
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', (e) => {
+                const targetId = e.target.value;
+                document.querySelector(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '-50px 0px -50px 0px', /* Adjust margin to trigger intersection earlier/later */
+                threshold: 0.5 /* Adjust threshold as needed for when the section is considered "active" */
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').includes(entry.target.id)) {
+                                link.classList.add('active');
+                                if (document.activeElement !== mobileNav) {
+                                   mobileNav.value = `#${entry.target.id}`;
+                                }
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scroll(
+                        { top: document.querySelector(this.getAttribute('href')).offsetTop - 70, behavior: 'smooth' }
+                    );
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
