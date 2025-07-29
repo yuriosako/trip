@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>京都紅葉めぐり 1泊2日の旅プラン Ver. 8</title>
+    <title>京都紅葉めぐり 1泊2日の旅プラン Ver. 10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -83,6 +83,10 @@
             .chart-container {
                 height: 350px;
             }
+        }
+        /* Add scroll-margin-top to account for fixed header */
+        section {
+            scroll-margin-top: 4rem; /* h-16 (64px) of the header */
         }
     </style>
 </head>
@@ -321,25 +325,25 @@
                             <h4 class="font-bold text-lg">夢京都 高台寺店</h4>
                             <p class="text-sm text-gray-500 mb-2">着物レンタル</p>
                             <p class="text-sm mb-3 flex-grow">清水寺や高台寺に近く、アクセス便利。夜間拝観に合わせた当日最終返却が可能です。</p>
-                            <a href="https://maps.app.goo.gl/m6Nn32Xg8H9f7tY19" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=夢京都+高台寺店" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
                         </div>
                         <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
                             <h4 class="font-bold text-lg">AWOMB 祇園八坂</h4>
                             <p class="text-sm text-gray-500 mb-2">手織り寿し</p>
                             <p class="text-sm mb-3 flex-grow">見た目も美しい「手織り寿し」は、まるで宝石箱のよう。着物姿でのランチにぴったりです。</p>
-                            <a href="https://maps.app.goo.gl/9uE84hG8sBw889eT8" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=AWOMB+祇園八坂" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
                         </div>
                         <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
                             <h4 class="font-bold text-lg">茶寮都路里 祇園本店</h4>
                             <p class="text-sm text-gray-500 mb-2">和カフェ</p>
                             <p class="text-sm mb-3 flex-grow">京都を代表する抹茶パフェの名店。散策の途中で甘いもので一息つきましょう。</p>
-                            <a href="https://maps.app.goo.gl/4Q3X5F3K3J4E8tY19" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=茶寮都路里+祇園本店" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
                         </div>
                         <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
                             <h4 class="font-bold text-lg">豆水楼 木屋町本店</h4>
                             <p class="text-sm text-gray-500 mb-2">豆腐料理</p>
                             <p class="text-sm mb-3 flex-grow">鴨川沿いの情緒あるお店で、湯葉や豆腐を使った京料理を。着物でのディナーにも最適です。</p>
-                            <a href="https://maps.app.goo.gl/V8Q1zRz8p6E2" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=豆水楼+木屋町本店" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
                         </div>
                     </div>
                 </div>
@@ -350,13 +354,13 @@
                             <h4 class="font-bold text-lg">釜めし 志津香</h4>
                             <p class="text-sm text-gray-500 mb-2">釜飯</p>
                             <p class="text-sm mb-3 flex-grow">瑠璃光院近くの趣あるお店。注文を受けてから丁寧に炊き上げる釜飯は格別の味です。</p>
-                            <a href="https://maps.app.goo.gl/444L61o38G74E2m46" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=釜めし+志津香" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
                         </div>
                         <div class="bg-secondary rounded-xl shadow-lg p-6 flex flex-col">
                             <h4 class="font-bold text-lg">嵐山よしむら</h4>
                             <p class="text-sm text-gray-500 mb-2">手打ち蕎麦</p>
                             <p class="text-sm mb-3 flex-grow">渡月橋を一望できる絶景ロケーションで、本格的な手打ち蕎麦が楽しめる人気店。</p>
-                            <a href="https://maps.app.goo.gl/8vUuK5QvHqgCqf746" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=嵐山よしむら" target="_blank" class="text-accent font-semibold hover:underline mt-auto">マップで見る &rarr;</a>
                         </div>
                     </div>
                 </div>
@@ -378,7 +382,7 @@
                         <p class="text-gray-700 mb-6 flex-grow">
                             清水五条駅から徒歩圏内、清水寺へも歩いて行ける便利な立地。趣のある京町家を改装したアットホームな雰囲気で、女性グループにも人気です。比較的リーズナブルな価格で、和の情緒を感じながら宿泊したい方におすすめです。共同スペースもあり、他の宿泊者との交流も楽しめるかもしれません。
                         </p>
-                        <a href="https://maps.app.goo.gl/P3wNn9XbB4Z5Y2Z9A" target="_blank" class="inline-block bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition self-start">
+                        <a href="https://www.google.com/maps/search/?api=1&query=ゲストハウス菜の花" target="_blank" class="inline-block bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition self-start">
                             マップで見る
                         </a>
                     </div>
@@ -392,7 +396,7 @@
                         <p class="text-gray-700 mb-6 flex-grow">
                             清水五条駅からすぐ、観光の拠点に最適なホテル。清水寺へも徒歩圏内で、夜間拝観後の移動も楽々です。清潔感のある機能的な客室で、3名様でも快適に過ごせる広めの部屋タイプがあることも魅力。安心して宿泊したい方にぴったりの選択肢です。
                         </p>
-                        <a href="https://maps.app.goo.gl/V8qG8B2B7m2V5S4wQ56" target="_blank" class="inline-block bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition self-start">
+                        <a href="https://www.google.com/maps/search/?api=1&query=清水五条呉竹壮" target="_blank" class="inline-block bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-red-800 transition self-start">
                             マップで見る
                         </a>
                     </div>
@@ -460,7 +464,7 @@
 
     <footer class="bg-secondary mt-16 py-8 border-t border-gray-200">
         <div class="container mx-auto text-center text-gray-500 text-sm">
-            <p>京都紅葉めぐり 1泊2日の旅プラン Ver. 8</p>
+            <p>京都紅葉めぐり 1泊2日の旅プラン Ver. 10</p>
             <p class="mt-1">最高の思い出作りをサポートします。</p>
         </div>
     </footer>
@@ -555,7 +559,7 @@
             const mobileNav = document.getElementById('mobile-nav');
             mobileNav.addEventListener('change', (e) => {
                 const targetId = e.target.value;
-                document.querySelector(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
             });
             
             const navLinks = document.querySelectorAll('.nav-link');
@@ -590,9 +594,7 @@
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scroll(
-                        { top: document.querySelector(this.getAttribute('href')).offsetTop - 70, behavior: 'smooth' }
-                    );
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
                 });
             });
         });
