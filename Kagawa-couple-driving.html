@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香川カップルドライブ旅 | 絶景と音楽を満喫する2日間</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Setouchi Calm -->
+    <!-- Application Structure Plan: The application uses a tab-based navigation for "Overview," "Day 1," "Day 2," and "Extras," allowing users to quickly access information for each part of the trip. This chronological structure is intuitive for a travel itinerary. Day 1 and Day 2 feature interactive timelines (using Chart.js) for a visual overview of the schedule. Details for restaurants and spots are presented in clickable cards, revealing more information on demand to keep the interface clean. This structure was chosen to transform the static report into a dynamic, easy-to-navigate plan that helps users visualize and organize their trip effectively. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Daily schedule -> Goal: Inform/Change -> Viz: Horizontal Bar Chart (Timeline) -> Interaction: Hover for details -> Justification: Visually represents the flow and duration of activities, making the schedule easy to grasp. -> Library: Chart.js.
+        - Report Info: Restaurant/Cafe/Spot details -> Goal: Organize/Inform -> Viz: HTML/CSS Cards -> Interaction: Click to expand/reveal details -> Justification: Progressive disclosure keeps the UI uncluttered while providing deep information on demand. -> Library/Method: Vanilla JS + Tailwind CSS.
+        - Report Info: Shuttle Bus options -> Goal: Compare -> Viz: Side-by-side styled cards -> Interaction: None (static comparison) -> Justification: Clearly presents two choices with their pros and cons for easy decision-making. -> Library/Method: HTML + Tailwind CSS.
+        - Report Info: Key times (sunset, etc.) -> Goal: Inform/Highlight -> Viz: Styled text with icons -> Interaction: None -> Justification: Draws attention to critical, time-sensitive information. -> Library/Method: HTML + Tailwind CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #FDFBF6;
+            color: #4A4A4A;
+        }
+        .tab-active {
+            background-color: #E6A471;
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+        .tab-inactive {
+            background-color: #FFFFFF;
+            color: #E6A471;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease-in-out;
+        }
+        .card-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .details-visible {
+            max-height: 500px;
+            transition: max-height 0.5s ease-in;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+                max-height: 450px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-5xl font-bold text-[#D58451]">香川カップルドライブ旅</h1>
+            <p class="text-lg md:text-xl mt-2 text-[#E6A471]">絶景と音楽を満喫する2日間 (2025/8/23 - 8/24)</p>
+        </header>
+
+        <nav class="flex justify-center mb-8 shadow-md rounded-lg">
+            <button data-tab="overview" class="tab-btn flex-1 p-3 md:p-4 text-sm md:text-base rounded-l-lg tab-active">旅の概要</button>
+            <button data-tab="day1" class="tab-btn flex-1 p-3 md:p-4 text-sm md:text-base tab-inactive">1日目 (8/23)</button>
+            <button data-tab="day2" class="tab-btn flex-1 p-3 md:p-4 text-sm md:text-base tab-inactive">2日目 (8/24)</button>
+            <button data-tab="others" class="tab-btn flex-1 p-3 md:p-4 text-sm md:text-base rounded-r-lg tab-inactive">その他</button>
+        </nav>
+
+        <main>
+            <section id="overview" class="tab-content space-y-6">
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-[#D58451] mb-4">旅のコンセプト</h2>
+                    <p class="leading-relaxed">この旅は、香川県が誇る自然の絶景と、中四国最大級の音楽フェスの熱狂を2日間で満喫する、カップルのための特別なドライブプランです。「日本のウユニ塩湖」と称される父母が浜のロマンチックな夕景から、翌日のMONSTER baSHでの心躍る音楽体験まで、忘れられない夏の思い出作りをテーマにしています。自由なドライブで、香川の魅力を余すところなく探訪しましょう。</p>
+                </div>
+
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-[#D58451] mb-4">持ち物リスト</h2>
+                    <p class="leading-relaxed mb-4">快適な旅とMONSTER baSHを最大限に楽しむために、以下のアイテムをお忘れなく！</p>
+                    <ul class="list-disc list-inside text-lg leading-relaxed">
+                        <li>🎫 **モンバスチケット**</li>
+                        <li>🚌 **シャトルバスチケット**</li>
+                        <li>🧊 **保冷バッグ** (飲み物や軽食、お土産用に)</li>
+                        <li>タオル (汗拭き用、休憩用など複数枚あると便利)</li>
+                        <li>🧢 **帽子** (日差し対策に必須)</li>
+                        <li>❄️ **ネッククーラー** (暑さ対策に)</li>
+                        <li>🌬️ **ハンディファン** (暑さ対策に)</li>
+                        <li>🕶️ **サングラス** (日差し対策に)</li>
+                        <li>🔋 **モバイルバッテリー** (スマートフォンの充電に)</li>
+                        <li>👕 **着替え** (汗をかいた時や最終日のリフレッシュに)</li>
+                        <li>💳 **ETCカード** (高速道路の利用に)</li>
+                    </ul>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                     <div class="card p-6">
+                        <span class="text-4xl">🌅</span>
+                        <h3 class="text-xl font-bold mt-2 mb-1 text-[#D58451]">絶景の夕日</h3>
+                        <p>父母が浜の幻想的な「鏡張り」の景色と夕日のコラボレーションを堪能します。</p>
+                    </div>
+                    <div class="card p-6">
+                        <span class="text-4xl">🎶</span>
+                        <h3 class="text-xl font-bold mt-2 mb-1 text-[#D58451]">音楽フェス</h3>
+                        <p>MONSTER baSH 2025に参加し、一日中最高の音楽に身を委ねます。</p>
+                    </div>
+                    <div class="card p-6">
+                        <span class="text-4xl">🚗</span>
+                        <h3 class="text-xl font-bold mt-2 mb-1 text-[#D58451]">自由なドライブ</h3>
+                        <p>レンタカーで気ままに移動し、香川の隠れた魅力やグルメを発見します。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="day1" class="tab-content hidden space-y-6">
+                 <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-[#D58451] mb-2">1日目の旅程：絶景の父母が浜と美食の夜</h2>
+                    <p class="leading-relaxed mb-4">1日目は、香川の自然が誇る絶景を目指すドライブから始まります。このセクションでは、午前中の四国水族館での体験から、父母が浜での感動的な夕日鑑賞、ランチ、ディナー、宿泊までの流れを時間軸で確認できます。各スポットのおすすめ情報をクリックして、旅の計画を具体的にイメージしてみましょう。</p>
+                    <div class="chart-container">
+                        <canvas id="day1Timeline"></canvas>
+                    </div>
+                </div>
+                <div id="day1-details" class="space-y-6"></div>
+            </section>
+
+            <section id="day2" class="tab-content hidden space-y-6">
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-[#D58451] mb-2">2日目の旅程：MONSTER baSHで最高の音楽体験</h2>
+                     <p class="leading-relaxed mb-4">2日目は、いよいよMONSTER baSH当日です。このセクションでは、ホテル出発から駐車場、シャトルバスでの移動、フェス会場での過ごし方、そして帰路までの流れを詳しく解説します。特に移動手段は重要なので、シャトルバスの情報をしっかり確認して、一日をスムーズに楽しみましょう。</p>
+                    <div class="chart-container">
+                        <canvas id="day2Timeline"></canvas>
+                    </div>
+                </div>
+                <div id="day2-details" class="space-y-6"></div>
+            </section>
+
+            <section id="others" class="tab-content hidden space-y-6">
+                 <div class="card p-6">
+                     <h2 class="text-2xl font-bold text-[#D58451] mb-2">その他のおすすめ観光スポット</h2>
+                     <p class="leading-relaxed">もし旅程に時間があれば、香川のさらなる魅力を発見してみませんか？ここでは、カップルにおすすめの観光スポットをいくつかご紹介します。壮大な神社から美しい庭園、瀬戸内海を一望できる絶景ポイントまで、旅の思い出をさらに彩る場所ばかりです。</p>
+                </div>
+                <div id="others-details" class="grid md:grid-cols-2 gap-6"></div>
+            </section>
+        </main>
+
+    </div>
+
+    <script>
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        const data = {
+            day1: [
+                { time: '9:00頃', title: '🚗 福山出発〜四国水族館へ', icon: '🚗', description: '福山から高速利用で約1.5時間。**高速料金は福山東IC〜坂出北IC間で片道約2,000円（ETC普通車、時期・時間帯により変動あり）**。四国水族館は坂出北ICからすぐ。' },
+                { time: '11:00-14:00頃', title: '🐬 四国水族館を満喫', icon: '🐬', description: '四国最大級の水族館。瀬戸内海を背景にしたイルカショーは必見。約3時間かけてじっくりと楽しみましょう。', details: [
+                    { name: '四国水族館', genre: '水族館', hours: '9:00〜18:00 (時期により変動あり)', holiday: '無休', point: '瀬戸内海を借景にした美しい展示やイルカプレイングタイムが魅力。事前にショーの時間を確認しておくのがおすすめ。' }
+                ]},
+                { time: '14:00頃', title: '🚗 父母が浜へ移動', icon: '🚗', description: '四国水族館から父母が浜までは車で約40分。' },
+                { time: '15:00頃', title: '🍽️ 父母が浜周辺でランチ', icon: '🍽️', description: '父母が浜に到着後、少し遅めのランチや軽食を。夕日鑑賞の前に、海が見えるおしゃれなカフェで休憩を。テイクアウトして浜辺で食べるのもおすすめ。', details: [
+                    { name: '父母が浜PORT', genre: 'カフェ、クラフトビール', hours: '平日 14:00〜日没, 土日祝 12:00〜日没', holiday: '水曜', point: '総合案内所併設。地元の特産品を使ったドリンクが人気。ビーチアイテムレンタルも可能。' },
+                    { name: 'トランキーロタコス 父母が浜店', genre: 'メキシカン', hours: '11:00〜18:00', holiday: '月曜', point: '草屋根が可愛いお店。本格タコスをテイクアウトして海辺で楽しむのも◎。' },
+                    { name: 'BAKE STUDIO OKAZAKI', genre: 'ハンバーガー', hours: '11:00〜18:30', holiday: '金曜', point: 'アメリカンな雰囲気で味わう絶品ハンバーガー。カジュアルなランチに最適。' }
+                ]},
+                { time: '17:30頃', title: '🌅 父母が浜散策と夕日鑑賞', icon: '🌅', description: '「日本のウユニ塩湖」で幻想的な「鏡張り」の絶景を。日没時刻は18:23。最高の写真を撮るために、日没の30分〜1時間前には到着しましょう。' },
+                { time: '夕食', title: '🍲 ホテル周辺でディナー', icon: '🍲', description: '父母が浜からホテルシェトワへ移動(約25分)。ホテル周辺で香川名物の骨付鳥やうどんを堪能。', details: [
+                    { name: '手打ちうどん つるや', genre: 'うどん', hours: '10:00〜19:30', holiday: '火曜', point: 'ホテルから徒歩1分。地元で愛されるコシのあるうどん。コスパも良いと評判。' },
+                    { name: '骨付鳥 味鶴', genre: '骨付鳥、居酒屋', hours: '17:00〜22:00', holiday: '水曜', point: '香川名物「骨付鳥」の人気店。スパイシーでジューシー。予約推奨。' },
+                    { name: 'グリルレストラン モカ', genre: '洋食、ステーキ', hours: '11:00〜15:00, 17:00〜22:00', holiday: '木曜日', point: 'ホテルから車で1分。ハンバーグやステーキが人気。モダンな雰囲気でデートにも。' }
+                ]},
+                { time: '宿泊', title: '🏨 ホテルシェトワ', icon: '🏨', description: '2020年オープンの綺麗なホテル。無料駐車場完備。翌日のモンバスに備えて、和洋食ビュッフェの朝食(7:00〜)もおすすめです。' }
+            ],
+            day2: [
+                { time: '6:30頃', title: '🚗 ホテル出発', icon: '🚗', description: 'ホテルをチェックアウトし、北野パーキングへ出発。移動時間は約35分。7:00の到着を目指しましょう。' },
+                { time: '7:00頃', title: '🅿️ 北野パーキングに到着', icon: '🅿️', description: '琴電琴平駅から徒歩3〜5分程度の場所にある、MONSTER baSHのシャトルバス乗り場に近い駐車場です。開場時刻よりも早く到着し、余裕を持って行動しましょう。', details: [
+                    { name: '北野パーキング', genre: '駐車場', hours: '24時間', holiday: '無休', point: '琴平駅から近く、MONSTER baSHシャトルバス乗り場（琴平観光センター跡地）へもアクセスしやすい駐車場です。料金は**2,500円＋手数料250円（前払い）**で、長時間駐車に適しています。マップは「香川県仲多度郡琴平町苗田1387-4」で検索してください。' }
+                ]},
+                { time: '7:15頃', title: '🚌 シャトルバスで会場へ', icon: '🚌', description: '琴平観光センター跡地から公式シャトルバスに乗車。チケットは事前購入が必須です！', details: [
+                    { name: 'MONbus Express ☆ Kotohira-go', genre: '優先入場バス', hours: '7:00-7:15発', holiday: '大人¥4,500', point: '早く会場に入りたい方向け。数量限定なので早めの購入を！' },
+                    { name: '琴平ツアーバス', genre: '通常バス', hours: '7:30-13:30発 (15-30分間隔)', holiday: '大人¥2,400', point: '手頃な価格で利用できるシャトルバス。こちらも事前購入が必須。' }
+                ]},
+                { time: '11:00-終演', title: '🎶 MONSTER baSHを満喫', icon: '🎶', description: '開場9:00、開演11:00。広大な会場なので動きやすい服装と靴で！タイムテーブルを事前に確認し、お目当てのアーティストを逃さないように計画的に動きましょう。' },
+                { time: '終演後', title: '🚌 シャトルバスで駐車場へ', icon: '🚌', description: '終演後もシャトルバスは運行。最終は公演終了の約2時間後まで。人気アーティスト終演後は混雑するので、余裕を持って乗り場へ。' },
+                { time: '帰路', icon: '🚗', title: '🚗 帰路へ', description: '駐車場から車で帰宅。旅の思い出を胸に、気をつけてお帰りください。' }
+            ],
+            others: [
+                { name: '金刀比羅宮 (こんぴらさん)', icon: '⛩️', description: '785段の石段を登る有名な神社。御本宮からの眺めは最高！二人で登り切る達成感は格別です。', time: '所要時間: 約1.5〜2時間' },
+                { name: '紫雲出山 (しうんでやま)', icon: '⛰️', description: '瀬戸内海の多島美を一望できる絶景スポット。父母が浜から車で約20分とアクセスも良好。', time: '父母が浜から車で約20分' },
+                { name: '四国水族館', icon: '🐬', description: '四国最大級の水族館。瀬戸内海を背景にしたイルカショーはロマンチックでカップルに大人気。', time: '所要時間: 約1.5〜2時間' },
+                { name: '瀬戸大橋記念公園', icon: '🌉', description: '瀬戸大橋の壮大さを間近で感じられる広大な公園。夜のライトアップはデートにぴったり。', time: '記念館見学: 約60〜90分' },
+                { name: '栗林公園', icon: '🌳', description: '国の特別名勝に指定された広大な日本庭園。四季折々の美しい景観の中をゆっくり散策できます。', time: '所要時間: 約60分〜' }
+            ]
+        };
+
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            let detailsHtml = '';
+            if (item.details) {
+                detailsHtml = item.details.map(d => `
+                    <div class="mt-4 border-t pt-4">
+                        <h4 class="font-bold text-[#E6A471]">${d.name}</h4>
+                        <p class="text-sm text-gray-600">${d.genre}</p>
+                        <p class="text-sm mt-1"><strong>営業時間:</strong> ${d.hours}</p>
+                        <p class="text-sm"><strong>料金/定休日:</strong> ${d.holiday}</p>
+                        <p class="text-sm mt-1"><strong>ポイント:</strong> ${d.point}</p>
+                    </div>
+                `).join('');
+            } else if (item.time) {
+                 detailsHtml = `<p class="text-sm mt-2"><strong>${item.time}</strong></p>`;
+            }
+
+            card.innerHTML = `
+                <div class="p-6 cursor-pointer card-header">
+                    <div class="flex items-center">
+                        <span class="text-3xl mr-4">${item.icon}</span>
+                        <div>
+                            <h3 class="text-xl font-bold text-[#D58451]">${item.title || item.name}</h3>
+                            <p class="text-gray-700 leading-snug">${item.description}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-detail px-6 pb-2">
+                    ${detailsHtml}
+                </div>
+            `;
+
+            if (item.details || item.time) {
+                card.querySelector('.card-header').addEventListener('click', () => {
+                    card.querySelector('.card-detail').classList.toggle('details-visible');
+                });
+            }
+            return card;
+        }
+
+        function renderCards(day, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            data[day].forEach(item => {
+                container.appendChild(createCard(item));
+            });
+        }
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tab = button.dataset.tab;
+
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('tab-inactive');
+                });
+                button.classList.add('tab-active');
+                button.classList.remove('tab-inactive');
+
+                tabContents.forEach(content => {
+                    if (content.id === tab) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        function createTimelineChart(canvasId, chartData, label) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = chartData.map(item => item.title);
+            const dataPoints = chartData.map((_, index) => [index, index + 1]);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: dataPoints,
+                        backgroundColor: 'rgba(230, 164, 113, 0.6)',
+                        borderColor: 'rgba(213, 132, 81, 1)',
+                        borderWidth: 1,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = chartData[context.dataIndex];
+                                    return `${item.time}: ${item.description}`;
+                                },
+                                title: function(context) {
+                                    return context[0].label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false,
+                            min: 0,
+                            max: chartData.length
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('load', () => {
+            renderCards('day1', 'day1-details');
+            renderCards('day2', 'day2-details');
+            renderCards('others', 'others-details');
+            createTimelineChart('day1Timeline', data.day1, '1日目の流れ');
+            createTimelineChart('day2Timeline', data.day2, '2日目の流れ');
+        });
+
+    </script>
+</body>
+</html>
