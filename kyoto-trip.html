@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>京都紅葉めぐり 女子旅のしおり - 新デザイン</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Autumn Zen -->
+    <!-- Application Structure Plan: A single-page, visually dynamic application structured with distinct, full-width sections for each part of the itinerary. A fixed left-hand side navigation bar will be introduced for desktop, providing quick access to all sections. On mobile, this will collapse into a prominent hamburger menu at the top. The schedule will feature a more prominent daily breakdown, possibly with accordion-style details. Spots and dining will maintain card grids but with enhanced visual flair and layout variations. This structure aims for a more immersive and less linear user experience, emphasizing visual segmentation and clear navigation, while making efficient use of screen real estate. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Trip Budget -> Goal: Inform on costs -> Viz/Method: Donut Chart (Chart.js) -> Interaction: Hover for details -> Justification: Visually breaks down expenses, more engaging than text.
+        - Report Info: 1泊2日の旅程 -> Goal: Organize trip flow -> Viz/Method: Interactive Timeline with daily tabs (HTML/CSS/JS) -> Interaction: Click event links to details and toggle day content -> Justification: Provides a clear, navigable overview of the trip, allowing easy switching between days.
+        - Report Info: Spot/Restaurant lists -> Goal: Allow exploration -> Viz/Method: Filterable Card Grid (HTML/CSS/JS) -> Interaction: Click filters to show/hide content -> Justification: Enables users to quickly find relevant options by area or type with visual appeal.
+        - Report Info: General trip prep -> Goal: Provide utility -> Viz/Method: Interactive Checklist (HTML/CSS/JS) -> Interaction: Click to check items -> Justification: Adds a practical, engaging tool for preparation.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #F8F5F1; /* Off-white / light beige */
+            color: #333333;
+        }
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #4A282D; /* Deep brownish-red */
+            color: white;
+            padding: 2rem 1.5rem;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
+        }
+        .content-area {
+            flex-grow: 1;
+            padding-left: 1rem; /* Adjust for sidebar padding */
+            padding-right: 1rem;
+        }
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                position: static;
+                padding: 1rem;
+            }
+            .sidebar-nav {
+                display: none;
+            }
+            .sidebar-toggle {
+                display: block;
+                text-align: center;
+                padding: 0.5rem;
+                background-color: #8C2B2B;
+                color: white;
+                cursor: pointer;
+            }
+            .sidebar-nav.active {
+                display: block;
+            }
+            .content-area {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+
+        .nav-item-sidebar {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s, color 0.3s;
+            display: block;
+            font-weight: 500;
+        }
+        .nav-item-sidebar:hover {
+            background-color: #6A3E45; /* Lighter brownish-red */
+        }
+        .nav-item-sidebar.active {
+            background-color: #A04A4F; /* Brighter brownish-red */
+            font-weight: 700;
+        }
+
+        .tab-active {
+            background-color: #8C2B2B; /* Dark red */
+            color: white;
+        }
+        .tab-inactive {
+            background-color: #E2E8F0; /* Light gray */
+            color: #4A5568;
+        }
+        .card-hover {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 6px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        .checklist-item input:checked + span {
+            text-decoration: line-through;
+            color: #A0AEC0;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar hidden md:block">
+            <h2 class="text-3xl font-bold mb-8 text-amber-100">京都旅のしおり</h2>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#hero" class="nav-item-sidebar active">旅の始まり</a></li>
+                    <li><a href="#overview" class="nav-item-sidebar">旅の概要</a></li>
+                    <li><a href="#schedule" class="nav-item-sidebar">タイムスケジュール</a></li>
+                    <li><a href="#spots" class="nav-item-sidebar">旅のみどころ</a></li>
+                    <li><a href="#dining" class="nav-item-sidebar">グルメ＆カフェ</a></li>
+                    <li><a href="#hotel" class="nav-item-sidebar">宿泊ホテル</a></li>
+                    <li><a href="#checklist" class="nav-item-sidebar">持ち物リスト</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Mobile Header & Toggle -->
+        <header class="md:hidden bg-white/90 backdrop-blur-sm shadow-md sticky top-0 z-50 w-full">
+            <div class="flex justify-between items-center p-4">
+                <h1 class="text-xl font-bold text-stone-800">京都旅のしおり</h1>
+                <button id="mobile-menu-toggle" class="sidebar-toggle p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+            <nav id="mobile-sidebar-nav" class="sidebar-nav hidden bg-deep-brown md:hidden">
+                <ul>
+                    <li><a href="#hero" class="nav-item-sidebar active">旅の始まり</a></li>
+                    <li><a href="#overview" class="nav-item-sidebar">旅の概要</a></li>
+                    <li><a href="#schedule" class="nav-item-sidebar">タイムスケジュール</a></li>
+                    <li><a href="#spots" class="nav-item-sidebar">旅のみどころ</a></li>
+                    <li><a href="#dining" class="nav-item-sidebar">グルメ＆カフェ</a></li>
+                    <li><a href="#hotel" class="nav-item-sidebar">宿泊ホテル</a></li>
+                    <li><a href="#checklist" class="nav-item-sidebar">持ち物リスト</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="content-area">
+            <section id="hero" class="relative text-white text-center py-24 md:py-36 bg-cover bg-center rounded-b-xl shadow-lg" style="background-image: url('https://placehold.co/1200x600/8B0000/FFFFFF?text=%E7%B4%85%E8%91%89%E3%81%A8%E5%8F%A4%E9%83%BD%E3%81%AE%E5%BB%BA%E7%89%A9%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88');">
+                <div class="absolute inset-0 bg-black/40 rounded-b-xl"></div>
+                <div class="relative container mx-auto px-4">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-4 tracking-wider">古都を彩る錦秋の旅</h1>
+                    <p class="text-lg md:text-2xl font-light">1泊2日 京都紅葉めぐり 女子旅のしおり</p>
+                    <p class="mt-4 text-xl font-semibold">2025年11月22日(金) 〜 23日(土)</p>
+                </div>
+            </section>
+
+            <section id="overview" class="py-16 px-4">
+                <div class="container mx-auto">
+                    <h2 class="text-3xl font-bold text-center text-stone-800 mb-4">旅の概要</h2>
+                    <p class="max-w-3xl mx-auto text-gray-700 mb-12 text-center">
+                        広島・岡山から集う、私たち3人のための特別な京都旅行！1年で最も美しい紅葉の季節に、心ゆくまで古都の秋を楽しみましょう。この旅では、息をのむ絶景「瑠璃光院」と京都の象徴「清水寺」を巡ります。美味しい京料理や可愛いカフェ、そして旅の疲れを癒す素敵なホテルも。最高の思い出を作るためのプランです！
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-8 items-center bg-white p-8 rounded-xl shadow-lg">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-stone-800 mb-4">旅の予算（1人あたり概算）</h3>
+                            <p class="text-gray-600 mb-4">旅費の目安です。お土産代は別途みておきましょう。</p>
+                            <div class="chart-container">
+                                <canvas id="budgetChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="text-2xl font-bold text-stone-800 mb-4">集合時間とアクセス</h3>
+                            <p class="text-gray-600 mb-6">出発地が違うので、京都駅での集合がスムーズです。福山発の「新幹線ホテルパック」がお得なので、尾道・笠岡の方は福山駅集合も検討の価値あり！</p>
+                            <div class="space-y-4">
+                                <div class="border-l-4 border-red-700 pl-4">
+                                    <p class="font-bold text-stone-800">目標集合時間</p>
+                                    <p class="text-lg">11月22日(金) <strong>午前9:30</strong></p>
+                                    <p class="text-gray-600">京都駅 中央口改札前</p>
+                                </div>
+                                <div class="border-l-4 border-amber-600 pl-4">
+                                    <p class="font-bold text-stone-800">アクセス例（福山駅 → 京都駅）</p>
+                                    <p>のぞみ号利用で約1時間20分。</p>
+                                    <p class="text-sm text-gray-600">例：福山 8:00頃発 → 京都 9:20頃着</p>
+                                </div>
+                                <div class="border-l-4 border-amber-600 pl-4">
+                                    <p class="font-bold text-stone-800">手荷物について</p>
+                                    <p>京都駅の「Crosta京都」で荷物を預けるか、ホテルへ配送すると身軽に動けて便利です！</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="schedule" class="py-16 bg-white rounded-xl shadow-lg mt-8 px-4">
+                <div class="container mx-auto">
+                    <h2 class="text-3xl font-bold text-center text-stone-800 mb-8">タイムスケジュール</h2>
+                    <div class="flex justify-center mb-8">
+                        <button id="day1-tab" class="schedule-tab tab-active text-lg font-bold py-2 px-8 rounded-l-full">1日目</button>
+                        <button id="day2-tab" class="schedule-tab tab-inactive text-lg font-bold py-2 px-8 rounded-r-full">2日目</button>
+                    </div>
+
+                    <div id="day1-content" class="schedule-content">
+                        <div class="max-w-3xl mx-auto">
+                            <h3 class="text-2xl font-bold text-center text-red-800 mb-6">11月22日(金)：瑠璃光院と東山散策</h3>
+                            <div class="relative border-l-2 border-red-200 ml-4 md:ml-0">
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-red-700 rounded-full text-white flex items-center justify-center font-bold">集</div>
+                                    <p class="font-bold text-lg">9:30 京都駅集合・荷物を預ける</p>
+                                    <p class="text-gray-600">全員集合！大きな荷物は駅で預けて、身軽に出発！</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-red-700 rounded-full text-white flex items-center justify-center font-bold">🍁</div>
+                                    <p class="font-bold text-lg">10:30 <a href="#spot-rurikoin" class="text-red-700 hover:underline">瑠璃光院</a> 拝観</p>
+                                    <p class="text-gray-600">叡山電車に乗って八瀬へ。（京都駅より約45-55分）息をのむ「床もみじ」を堪能。要事前予約！</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-amber-600 rounded-full text-white flex items-center justify-center font-bold">🍴</div>
+                                    <p class="font-bold text-lg">12:30 東山エリアでランチ</p>
+                                    <p class="text-gray-600">市内に戻り、清水寺周辺で京料理ランチ。（瑠璃光院より約40-50分）</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-red-700 rounded-full text-white flex items-center justify-center font-bold">🍁</div>
+                                    <p class="font-bold text-lg">14:00 <a href="#spot-kiyomizu" class="text-red-700 hover:underline">清水寺</a>と周辺散策</p>
+                                    <p class="text-gray-600">清水の舞台からの絶景！産寧坂・二年坂の散策と食べ歩きも楽しむ。（ランチ場所からすぐ）</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-red-700 rounded-full text-white flex items-center justify-center font-bold">✨</div>
+                                    <p class="font-bold text-lg">17:00 <a href="#spot-kodaiji" class="text-red-700 hover:underline">高台寺</a> ライトアップ</p>
+                                    <p class="text-gray-600">幻想的な夜間特別拝観へ。水面に映る紅葉が美しい。（清水寺より徒歩約15分）</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-amber-600 rounded-full text-white flex items-center justify-center font-bold">🍴</div>
+                                    <p class="font-bold text-lg">19:00 祇園で夕食</p>
+                                    <p class="text-gray-600">風情ある祇園の街で、美味しい京料理ディナー。（高台寺より徒歩約10-15分）</p>
+                                </div>
+                                <div class="pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold">🏨</div>
+                                    <p class="font-bold text-lg">21:00 <a href="#hotel" class="text-red-700 hover:underline">ホテル</a>にチェックイン</p>
+                                    <p class="text-gray-600">大浴場で今日の疲れを癒やして、明日に備えよう！（祇園より約10-15分）</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="day2-content" class="schedule-content hidden">
+                        <div class="max-w-3xl mx-auto">
+                            <h3 class="text-2xl font-bold text-center text-red-800 mb-6">11月23日(土)：錦秋の嵐山を満喫</h3>
+                            <div class="relative border-l-2 border-red-200 ml-4 md:ml-0">
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-red-700 rounded-full text-white flex items-center justify-center font-bold">🍁</div>
+                                    <p class="font-bold text-lg">10:00 <a href="#spot-arashiyama" class="text-red-700 hover:underline">嵐山</a> 散策</p>
+                                    <p class="text-gray-600">渡月橋、天龍寺、そして美しい竹林の道を歩く。（ホテルより電車で約30-40分）</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-amber-600 rounded-full text-white flex items-center justify-center font-bold">🍴</div>
+                                    <p class="font-bold text-lg">12:30 嵐山で湯豆腐ランチ</p>
+                                    <p class="text-gray-600">名物の湯豆腐で、体も心も温まるひととき。（嵐山散策エリアからすぐ）</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-amber-600 rounded-full text-white flex items-center justify-center font-bold">🍵</div>
+                                    <p class="font-bold text-lg">14:00 抹茶スイーツ＆カフェタイム</p>
+                                    <p class="text-gray-600">おしゃれなカフェで休憩。絶品抹茶スイーツを味わう。（湯豆腐ランチ場所からすぐ）</p>
+                                </div>
+                                <div class="mb-8 pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-yellow-500 rounded-full text-white flex items-center justify-center font-bold">🎁</div>
+                                    <p class="font-bold text-lg">15:30 お土産探し＆京都駅へ</p>
+                                    <p class="text-gray-600">旅の思い出にお土産を選んで、京都駅へ移動。（嵐山より電車で約20-30分）</p>
+                                </div>
+                                <div class="pl-8 relative timeline-item">
+                                    <div class="absolute -left-4 top-1 w-8 h-8 bg-green-600 rounded-full text-white flex items-center justify-center font-bold">🚄</div>
+                                    <p class="font-bold text-lg">17:00 京都駅出発</p>
+                                    <p class="text-gray-600">楽しかったね！気をつけて帰ろう。また来ようね！</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="spots" class="py-16 px-4">
+                <div class="container mx-auto">
+                    <h2 class="text-3xl font-bold text-center text-stone-800 mb-8">旅のみどころ</h2>
+                    <p class="max-w-3xl mx-auto text-center text-gray-700 mb-12">
+                        今回の旅で訪れるメインスポットをご紹介します。どの場所も秋の京都を象徴する美しい景色が広がっています。写真撮影も楽しみましょう！
+                    </p>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div id="spot-rurikoin" class="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                            <img src="https://placehold.co/600x400/8B4513/FFFFFF?text=%E7%91%A0%E7%92%83%E5%85%89%E9%99%A2%0A%E3%81%AE%E7%B4%85%E8%91%89%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="瑠璃光院の紅葉のイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-2">瑠璃光院</h3>
+                                <p class="text-gray-600 mb-4">磨き上げられた床や机に紅葉が映り込む「床もみじ」は、まさに絶景。秋の特別拝観は事前予約が必須なので、公式サイトを必ずチェック！</p>
+                                <span class="inline-block bg-red-200 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">要予約</span>
+                            </div>
+                        </div>
+                        <div id="spot-kiyomizu" class="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                            <img src="https://placehold.co/600x400/DC143C/FFFFFF?text=%E6%B8%85%E6%B0%B4%E5%AF%BA%0A%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="清水寺のイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-2">清水寺・東山散策</h3>
+                                <p class="text-gray-600 mb-4">京都観光の王道。清水の舞台から錦雲渓の紅葉を見下ろす景色は圧巻。産寧坂や二年坂の風情ある街並み散策も外せません。</p>
+                                <span class="inline-block bg-blue-200 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">定番</span>
+                            </div>
+                        </div>
+                        <div id="spot-kodaiji" class="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                            <img src="https://placehold.co/600x400/4B0082/FFFFFF?text=%E9%AB%98%E5%8F%B0%E5%AF%BA%0A%E3%81%AE%E3%83%A9%E3%82%A4%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="高台寺のライトアップのイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-2">高台寺</h3>
+                                <p class="text-gray-600 mb-4">夜のライトアップが有名で、臥龍池に映る「逆さもみじ」は幻想的。昼間とは違う、幽玄な紅葉の世界を楽しめます。</p>
+                                <span class="inline-block bg-purple-200 text-purple-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">ライトアップ</span>
+                            </div>
+                        </div>
+                        <div id="spot-arashiyama" class="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                            <img src="https://placehold.co/600x400/228B22/FFFFFF?text=%E5%B5%90%E5%B1%B1%0A%E6%B8%A1%E6%9C%88%E6%A9%8B%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="嵐山渡月橋のイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-2">嵐山</h3>
+                                <p class="text-gray-600 mb-4">渡月橋から眺める紅葉の山々、世界遺産・天龍寺の庭園、静寂に包まれた竹林の道など、見どころ満載のエリアです。</p>
+                                <span class="inline-block bg-green-200 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">自然満喫</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="dining" class="py-16 bg-white rounded-xl shadow-lg mt-8 px-4">
+                <div class="container mx-auto">
+                    <h2 class="text-3xl font-bold text-center text-stone-800 mb-8">グルメ＆カフェ</h2>
+                    <p class="max-w-3xl mx-auto text-center text-gray-700 mb-12">
+                        旅の楽しみはやっぱり美味しいごはん！京都ならではの湯豆腐や京料理、可愛い抹茶スイーツまで、気になるお店をピックアップしました。
+                    </p>
+                    <div class="text-center mb-8 space-x-2">
+                        <button class="dining-filter-btn bg-red-700 text-white py-2 px-4 rounded-full" data-filter="all">すべて</button>
+                        <button class="dining-filter-btn bg-gray-200 text-gray-700 py-2 px-4 rounded-full" data-filter="lunch">ランチ</button>
+                        <button class="dining-filter-btn bg-gray-200 text-gray-700 py-2 px-4 rounded-full" data-filter="dinner">ディナー</button>
+                        <button class="dining-filter-btn bg-gray-200 text-gray-700 py-2 px-4 rounded-full" data-filter="cafe">カフェ</button>
+                    </div>
+                    <div id="dining-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="dining-item bg-gray-50 rounded-lg shadow-sm overflow-hidden card-hover" data-category="lunch">
+                            <img src="https://placehold.co/600x400/CD853F/FFFFFF?text=%E6%B9%AF%E8%B1%86%E8%85%90%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="湯豆腐のイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="text-sm text-gray-500">嵐山・ランチ</span>
+                                <h3 class="text-xl font-bold my-1">湯豆腐 嵯峨野</h3>
+                                <p class="text-gray-600">嵐山名物の湯豆腐を味わえる名店。優しい出汁が染み渡ります。予算: ¥3,000~</p>
+                            </div>
+                        </div>
+                        <div class="dining-item bg-gray-50 rounded-lg shadow-sm overflow-hidden card-hover" data-category="lunch">
+                            <img src="https://placehold.co/600x400/D2B48C/333333?text=%E3%81%8A%E3%81%B0%E3%82%93%E3%81%96%E3%81%84%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="おばんざいのイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="text-sm text-gray-500">東山・ランチ</span>
+                                <h3 class="text-xl font-bold my-1">清水 順正 おかべ家</h3>
+                                <p class="text-gray-600">清水寺近くで湯豆腐や京料理を手軽に。散策の合間にぴったり。予算: ¥2,000~</p>
+                            </div>
+                        </div>
+                        <div class="dining-item bg-gray-50 rounded-lg shadow-sm overflow-hidden card-hover" data-category="dinner">
+                            <img src="https://placehold.co/600x400/A0522D/FFFFFF?text=%E4%BA%AC%E6%96%99%E7%90%86%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="京料理のイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="text-sm text-gray-500">祇園・ディナー</span>
+                                <h3 class="text-xl font-bold my-1">祇園エリアの食事処</h3>
+                                <p class="text-gray-600">花見小路通周辺には風情あるお店がたくさん。予算に合わせてお店を選んでみて。</p>
+                            </div>
+                        </div>
+                        <div class="dining-item bg-gray-50 rounded-lg shadow-sm overflow-hidden card-hover" data-category="cafe">
+                            <img src="https://placehold.co/600x400/6B8E23/FFFFFF?text=%E6%8A%B9%E8%8C%B6%E3%83%91%E3%83%95%E3%82%A7%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="抹茶パフェのイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="text-sm text-gray-500">嵐山・カフェ</span>
+                                <h3 class="text-xl font-bold my-1">eX cafe 京都嵐山本店</h3>
+                                <p class="text-gray-600">旧邸宅を改装した和モダンなカフェ。自分で焼くお団子セットが人気！</p>
+                            </div>
+                        </div>
+                        <div class="dining-item bg-gray-50 rounded-lg shadow-sm overflow-hidden card-hover" data-category="cafe">
+                            <img src="https://placehold.co/600x400/3CB371/FFFFFF?text=%E3%81%8A%E5%9B%A3%E5%AD%90%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="お団子のイラスト" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="text-sm text-gray-500">東山・食べ歩き</span>
+                                <h3 class="text-xl font-bold my-1">京都だんご 藤菜美</h3>
+                                <p class="text-gray-600">産寧坂にある人気店。みたらし団子と抹茶のセットは散策のお供に最高！</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="hotel" class="py-16 px-4">
+                <div class="container mx-auto">
+                    <h2 class="text-3xl font-bold text-center text-stone-800 mb-8">宿泊ホテル</h2>
+                    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden md:flex">
+                        <div class="md:flex-shrink-0">
+                            <img class="h-full w-full object-cover md:w-64" src="https://placehold.co/600x800/6A5ACD/FFFFFF?text=%E4%BA%AC%E4%B9%83%E5%AE%BF%0A%E5%B7%A3%E7%AB%B9%E8%8D%98%E3%81%AE%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88" alt="京乃宿 清水五条 呉竹荘のイラスト">
+                        </div>
+                        <div class="p-8">
+                            <div class="uppercase tracking-wide text-sm text-red-700 font-semibold">京乃宿 清水五条 呉竹荘</div>
+                            <p class="block mt-1 text-2xl leading-tight font-bold text-black">今回の旅のお宿</p>
+                            <p class="mt-4 text-gray-600">今回の旅の条件にぴったりのホテルです。清水寺や祇園へのアクセスが良く、観光にとても便利。3人で泊まれる和洋室があり、広々とした大浴場で旅の疲れを癒せるのが嬉しいポイント！</p>
+                            <div class="mt-6">
+                                <div class="flex items-center mb-2">
+                                    <span class="text-amber-600 mr-2">✓</span><span>1人1泊7,000円以内のご予算</span>
+                                </div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-amber-600 mr-2">✓</span><span>清水五条駅から徒歩5分、清水寺へも徒歩圏内</span>
+                                </div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-amber-600 mr-2">✓</span><span>3人で泊まれる快適な和洋室</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-amber-600 mr-2">✓</span><span>旅の疲れを癒す大浴場完備</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="checklist" class="py-16 bg-white rounded-xl shadow-lg mt-8 px-4">
+                <div class="container mx-auto">
+                    <h2 class="text-3xl font-bold text-center text-stone-800 mb-8">持ち物リスト</h2>
+                    <p class="max-w-3xl mx-auto text-center text-gray-700 mb-12">
+                        忘れ物がないようにチェックしよう！特に秋の京都は朝晩冷え込むので、羽織るものは必須です。
+                    </p>
+                    <div class="max-w-md mx-auto bg-gray-50 p-8 rounded-xl shadow-sm">
+                        <div class="space-y-4">
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>新幹線のチケット</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>現金・クレジットカード</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>スマートフォン・充電器</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>着替え（1泊2日分）</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>羽織るもの（カーディガン等）</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>歩きやすい靴</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>化粧品・スキンケア用品</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>ハンカチ・ティッシュ</span></label>
+                            <label class="flex items-center checklist-item"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500 mr-3"><span>エコバッグ</span></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer class="bg-stone-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>最高の京都旅行にしようね！</p>
+            <p class="text-sm mt-2 text-stone-400">Created with love for our girls' trip.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const budgetData = {
+                labels: ['交通費 (新幹線)', '宿泊費', '食費', '拝観料・他'],
+                datasets: [{
+                    label: '予算内訳',
+                    data: [17000, 7000, 8000, 4000],
+                    backgroundColor: [
+                        '#D97706', /* amber-600 */
+                        '#C53030', /* red-700 */
+                        '#FBBF24', /* amber-400 */
+                        '#92400E'  /* amber-800 */
+                    ],
+                    hoverOffset: 4
+                }]
+            };
+
+            const budgetConfig = {
+                type: 'doughnut',
+                data: budgetData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#4A4A4A'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                },
+            };
+
+            const budgetChartCtx = document.getElementById('budgetChart').getContext('2d');
+            new Chart(budgetChartCtx, budgetConfig);
+            
+            const day1Tab = document.getElementById('day1-tab');
+            const day2Tab = document.getElementById('day2-tab');
+            const day1Content = document.getElementById('day1-content');
+            const day2Content = document.getElementById('day2-content');
+
+            day1Tab.addEventListener('click', () => {
+                day1Content.classList.remove('hidden');
+                day2Content.classList.add('hidden');
+                day1Tab.classList.replace('tab-inactive', 'tab-active');
+                day2Tab.classList.replace('tab-active', 'tab-inactive');
+            });
+
+            day2Tab.addEventListener('click', () => {
+                day2Content.classList.remove('hidden');
+                day1Content.classList.add('hidden');
+                day2Tab.classList.replace('tab-inactive', 'tab-active');
+                day1Tab.classList.replace('tab-active', 'tab-inactive');
+            });
+            
+            const filterButtons = document.querySelectorAll('.dining-filter-btn');
+            const diningItems = document.querySelectorAll('.dining-item');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const filter = button.dataset.filter;
+                    
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('bg-red-700', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    button.classList.add('bg-red-700', 'text-white');
+                    button.classList.remove('bg-gray-200', 'text-gray-700');
+
+                    diningItems.forEach(item => {
+                        if (filter === 'all' || item.dataset.category === filter) {
+                            item.classList.remove('hidden');
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Sidebar navigation logic
+            const sidebarNavLinks = document.querySelectorAll('.sidebar-nav a');
+            const sections = document.querySelectorAll('main section');
+            const headerOffset = 0; // No sticky header at top if sidebar is used for main navigation
+
+            sidebarNavLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        // For smooth scroll, subtract header offset if applicable, though sidebar makes it less critical
+                        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                        // Close mobile menu after selection
+                        const mobileMenu = document.getElementById('mobile-sidebar-nav');
+                        if (mobileMenu && mobileMenu.classList.contains('active')) {
+                            mobileMenu.classList.remove('active');
+                        }
+                    }
+                });
+            });
+
+            // Highlight sidebar nav item on scroll
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    // Adjust offset for accurate highlighting based on section visibility
+                    if (pageYOffset >= sectionTop - window.innerHeight / 3) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                sidebarNavLinks.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('href') === `#${current}`) {
+                        item.classList.add('active');
+                    }
+                });
+            });
+
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileSidebarNav = document.getElementById('mobile-sidebar-nav');
+
+            if (mobileMenuToggle && mobileSidebarNav) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    mobileSidebarNav.classList.toggle('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
